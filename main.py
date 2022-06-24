@@ -1,4 +1,3 @@
-from io import BytesIO
 from subprocess import run
 from lexer.lexer import Lexer
 from lexer.token import Token
@@ -11,6 +10,7 @@ from compiler.compiler import Compiler
 # LEXER - output tokens
 # PARSER - output expression tree
 # COMPILER - output compiled asm
+# <blank> - regular mode
 OUTPUT_MODE = ""
 
 def print_tokens(tokens : list[Token]):
@@ -35,7 +35,7 @@ def main():
     if not OUTPUT_MODE:
         with open("output.asm", "w") as f:
             f.write(compiler.compile())
-        run(["fasm", "output.asm"])
+        run(["fasm", "output.asm"], capture_output=True)
 
         out = open("output_result", "wb")
         run(["./output"], stdout=out)
