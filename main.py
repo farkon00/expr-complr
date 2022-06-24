@@ -40,8 +40,12 @@ def execute_expr(expr : str):
 
 def main():
     if not OUTPUT_MODE:
+        print("Use \"exit\" to exit")
         while True:
-            execute_expr(input("> "))
+            inp = input(" > ")
+            if inp.strip() == "exit":
+                exit(0)
+            execute_expr(inp)
 
     lexer = Lexer(input("Expression: "))
     tokens = lexer.lex()
