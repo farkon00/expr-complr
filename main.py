@@ -1,4 +1,7 @@
+import os
+
 from subprocess import run
+
 from lexer.lexer import Lexer
 from lexer.token import Token
 from parser.expr import *
@@ -40,6 +43,10 @@ def execute_expr(expr : str):
 
     with open("output_result", "rb") as out:
         print(int.from_bytes(out.read(), "little"))
+
+    os.remove("output.asm")
+    os.remove("output_result")
+    os.remove("output")
 
 def main():
     if not OUTPUT_MODE:
