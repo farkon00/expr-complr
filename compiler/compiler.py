@@ -21,11 +21,12 @@ class Compiler:
 
         segment readable executable
             power:
+                mov rcx, rax
                 .L0:
-                    mul rbx
+                    mul rcx
                     sub rbx, 1
-                    cmp rbx, 0
-                    jne .L0
+                    cmp rbx, 1
+                    jnz .L0
                 ret
 
             entry start
