@@ -1,12 +1,17 @@
+from io import BytesIO
+from subprocess import run
 from lexer.lexer import Lexer
 from lexer.token import Token
 
 from parser.parser import Parser
 
+from compiler.compiler import Compiler
+
 # Availiable modes
 # LEXER - output tokens
 # PARSER - output expression tree
-OUTPUT_MODE = "PARSER"
+# COMPILER - output compiled asm
+OUTPUT_MODE = ""
 
 def print_tokens(tokens : list[Token]):
     for token in tokens:
@@ -15,17 +20,35 @@ def print_tokens(tokens : list[Token]):
 def main():
     lexer = Lexer(input("Expression: "))
     tokens = lexer.lex()
+    parser = Parser(tokens, lexer.text)
+    expr = parser.parse_expr()
+    compiler = Compiler(expr)
     if OUTPUT_MODE == "LEXER":
         print_tokens(tokens)
         return
     if OUTPUT_MODE == "PARSER":
-        parser = Parser(tokens, lexer.text)
-        print(parser.parse_expr())
+        print(expr)
+        return
+    if OUTPUT_MODE == "COMPILER":
+        print(compiler.compile())
+        return
+    if not OUTPUT_MODE:
+        with open("output.asm", "w") as f:
+            f.write(compiler.compile())
+        run(["fasm", "output.asm"])
+
+        out = open("output_result", "wb")
+        run(["./output"], stdout=out)
+        out.close()
+
+        out = open("output_result", "rb")
+        print(int.from_bytes(out.read(), "little"))
+        out.close()
+
         return
 
-    # TODO: when project will have minimal functionality, add:
-    # Put blank in output mode to run at regular mode
     print(f"Unknown output mode: {OUTPUT_MODE}") 
+    print("Put blank in OUTPUT_MODE to run at regular mode")
 
 if __name__ == "__main__":
     main()
