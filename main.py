@@ -7,6 +7,7 @@ from parser.parser import Parser
 from compiler.compiler import Compiler
 
 # Availiable modes
+# Mostly for debugging
 # LEXER - output tokens
 # PARSER - output expression tree
 # COMPILER - output compiled asm

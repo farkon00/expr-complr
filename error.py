@@ -10,4 +10,4 @@ def throw_error(message: str, index: int = 0, line: str = "", lexer=None):
     sys.stderr.write("\t" + line + "\n")
     sys.stderr.write("\t" + " " * index + "^\n")
 
-    exit(1)
+    raise SystemExit()
