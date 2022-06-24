@@ -18,7 +18,9 @@ class Parser:
         self.last_value = None
 
     def parse_expr(self) -> Expr:
+        entered = False
         for token in self.tokens:
+            entered = True
             if token.type == TokenType.INTEGER:
                 self.last_value = Expr(ExprType.INTEGER, value=token.value)
             elif token.type == TokenType.OPERATION and token.value in self.OPER_TO_EXPR:
@@ -26,9 +28,9 @@ class Parser:
                     throw_error("Missing right operand", index=token.index, line=self.text)
                 right = self.last_value
                 self.last_value = Expr(self.OPER_TO_EXPR[token.value], self.parse_expr(), right)
-                if self.last_value.right is None:
+                if self.last_value.left is None:
                     throw_error("Missing left operand", index=token.index, line=self.text)
             else:
                 assert False, f"Unknown token type {token.type.name}"
 
-        return self.last_value
+        return self.last_value if entered else None
