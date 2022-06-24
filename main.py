@@ -19,8 +19,8 @@ def main():
         print_tokens(tokens)
         return
     if OUTPUT_MODE == "PARSER":
-        parser = Parser(tokens)
-        print(parser.parse())
+        parser = Parser(tokens, lexer.text)
+        print(parser.parse_expr())
         return
 
     # TODO: when project will have minimal functionality, add:
