@@ -1,6 +1,7 @@
 from subprocess import run
 from lexer.lexer import Lexer
 from lexer.token import Token
+from parser.expr import *
 
 from parser.parser import Parser
 
@@ -24,6 +25,8 @@ def execute_expr(expr : str):
         tokens = lexer.lex()
         parser = Parser(tokens, lexer.text)
         expr = parser.parse_expr()
+        if expr is None:
+            expr = Expr(ExprType.INTEGER, value=0)
         compiler = Compiler(expr)
     except SystemExit:
         return
