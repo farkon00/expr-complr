@@ -16,4 +16,4 @@ class Lexer:
         return self.text[self.index]
 
     def lex(self) -> list[Token]:
-        return []
+        return [Token(TokenType.INTEGER, "69", 0)]
