@@ -7,7 +7,6 @@ class Parser:
     OPER_TO_EXPR = {
         "+" : ExprType.ADD,
         "-" : ExprType.SUB,
-        "^" : ExprType.POW,
     }
     HIGHER_OPER_TO_EXPR = {
         "*" : ExprType.MUL,
@@ -29,7 +28,7 @@ class Parser:
             if self.last_value is None:
                 self.last_value = token
                 continue
-            if token.value in self.HIGHER_OPER_TO_EXPR:
+            if token.value == "^":
                 if self.last_value is None:
                     throw_error("Missing right operand", index=token.index, line=self.text)
                 right = self.last_value
@@ -43,7 +42,36 @@ class Parser:
                     throw_error("Missing left operand", index=token.index, line=self.text)
                 if left.type != TokenType.INTEGER:
                     throw_error("Missing left operand", index=left.index, line=self.text)    
-                self.last_value = Expr(self.HIGHER_OPER_TO_EXPR[token.value], Expr(ExprType.INTEGER, value=int(left.value)), right)
+                self.last_value = Expr(ExprType.POW, Expr(ExprType.INTEGER, value=int(left.value)), right)
+            else:
+                final_tokens.append(self.last_value)
+                self.last_value = token
+
+        final_tokens.append(self.last_value)
+        self.tokens = iter(final_tokens)
+        final_tokens = []
+        for token in self.tokens:
+            if self.last_value is None:
+                self.last_value = token
+                continue
+            if token.value in self.HIGHER_OPER_TO_EXPR:
+                if self.last_value is None:
+                    throw_error("Missing right operand", index=token.index, line=self.text)
+                right = self.last_value
+                if isinstance(self.last_value, Token):
+                    if self.last_value.type != TokenType.INTEGER:
+                        throw_error("Missing right operand", index=token.index, line=self.text)
+                    right = Expr(ExprType.INTEGER, value=int(self.last_value.value))
+                try:
+                    left = next(self.tokens)
+                except StopIteration:
+                    throw_error("Missing left operand", index=token.index, line=self.text)
+                if isinstance(left, Token):
+                    if left.type != TokenType.INTEGER:
+                        throw_error("Missing left operand", index=left.index, line=self.text)    
+                    self.last_value = Expr(self.HIGHER_OPER_TO_EXPR[token.value], Expr(ExprType.INTEGER, value=int(left.value)), right)
+                else:
+                    self.last_value = Expr(self.HIGHER_OPER_TO_EXPR[token.value], left, right)
             else:
                 final_tokens.append(self.last_value)
                 self.last_value = token
