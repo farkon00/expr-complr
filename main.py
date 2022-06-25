@@ -18,6 +18,8 @@ from compiler.compiler import Compiler
 # <blank> - regular mode
 OUTPUT_MODE = ""
 
+NEGATIVE_BOUNDRY = 9_223_372_036_854_775_807
+
 def print_tokens(tokens : list[Token]):
     for token in tokens:
         print(f"{token.index} {token.type.name} {token.value}")
@@ -42,7 +44,8 @@ def execute_expr(expr : str):
         run(["./output"], stdout=out)
 
     with open("output_result", "rb") as out:
-        print(int.from_bytes(out.read(), "little"))
+        result = int.from_bytes(out.read(), "little")
+        print(result if result < NEGATIVE_BOUNDRY else result - (NEGATIVE_BOUNDRY * 2 + 2))
 
     os.remove("output.asm")
     os.remove("output_result")
