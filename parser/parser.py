@@ -19,13 +19,30 @@ class Parser:
         self.tokens = iter(tokens[::-1])
         self.last_value = None
 
-    def parse_expr(self) -> Expr:
+    def parse_expr(self, is_brack: bool = False) -> Expr:
         entered = False
 
         final_tokens = []
 
         self.last_value = None
 
+        for token in self.tokens:
+            if token.type == TokenType.R_PAREN:
+                final_tokens.append(self.parse_expr(is_brack=True))
+            elif token.type == TokenType.L_PAREN:
+                if is_brack:
+                    break
+                else:
+                    throw_error("Parenthesis was not closed", index=token.index, line=self.text)
+            else:
+                final_tokens.append(token)
+        else:
+            if is_brack:
+                throw_error("Unexpected \")\"", line=self.text)
+        
+        self.last_value = None
+        self.tokens = iter(final_tokens)
+        final_tokens = []
         for token in self.tokens:
             if self.last_value is None:
                 self.last_value = token
@@ -42,14 +59,17 @@ class Parser:
                     left = next(self.tokens)
                 except StopIteration:
                     throw_error("Missing left operand", index=token.index, line=self.text)
-                if left.type != TokenType.INTEGER:
-                    throw_error("Missing left operand", index=left.index, line=self.text)    
-                self.last_value = Expr(ExprType.POW, Expr(ExprType.INTEGER, value=int(left.value)), right)
+                if isinstance(left, Token) and left.type != TokenType.INTEGER:
+                    throw_error("Missing left operand", index=left.index, line=self.text)
+                if isinstance(left, Token):
+                    left = Expr(ExprType.INTEGER, value=int(left.value))
+                self.last_value = Expr(ExprType.POW, left, right)
             else:
                 final_tokens.append(self.last_value)
                 self.last_value = token
 
-        final_tokens.append(self.last_value)
+        if self.last_value is not None:
+            final_tokens.append(self.last_value)
         self.last_value = None
         self.tokens = iter(final_tokens)
         final_tokens = []
@@ -79,10 +99,8 @@ class Parser:
                 final_tokens.append(self.last_value)
                 self.last_value = token
 
-        if self.last_value:
+        if self.last_value is not None:
             final_tokens.append(self.last_value)
-        else:
-            return None
         self.last_value = None
         self.tokens = iter(final_tokens)
         for token in self.tokens:

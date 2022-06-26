@@ -44,6 +44,10 @@ class Lexer:
                 self.tokens.append(Token(TokenType.INTEGER, self._lex_integer(), self.index))
             elif self._peek() in self.OPERATIONS:
                 self.tokens.append(Token(TokenType.OPERATION, self._peek(), self.index))
+            elif self._peek() == "(":
+                self.tokens.append(Token(TokenType.L_PAREN, self._peek(), self.index))
+            elif self._peek() == ")":
+                self.tokens.append(Token(TokenType.R_PAREN, self._peek(), self.index))
             else:
                 throw_error(f"Unknown character {self._peek()}", lexer=self)
             self._advance()
