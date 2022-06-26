@@ -1,3 +1,4 @@
+import cmd
 import os
 
 from subprocess import run
@@ -9,6 +10,41 @@ from parser.expr import *
 from parser.parser import Parser
 
 from compiler.compiler import Compiler
+
+class REPL(cmd.Cmd):
+    intro = "Use \"exit\" to exit"
+    prompt = " > "
+
+    def onecmd(self, expr):
+        if expr.strip() == "exit":
+            return True
+        try:
+            lexer = Lexer(expr)
+            tokens = lexer.lex()
+            parser = Parser(tokens, lexer.text)
+            expr = parser.parse_expr()
+            if expr is None:
+                expr = Expr(ExprType.INTEGER, value=0)
+            compiler = Compiler(expr)
+        except SystemExit:
+            return
+
+        with open("output.asm", "w") as f:
+            f.write(compiler.compile())
+        run(["fasm", "output.asm"], capture_output=True)
+
+        with open("output_result", "wb") as out:
+            run(["./output"], stdout=out)
+
+        with open("output_result", "rb") as out:
+            result = int.from_bytes(out.read(), "little")
+            print(result if result < NEGATIVE_BOUNDRY else result - (NEGATIVE_BOUNDRY * 2 + 2))
+
+        os.remove("output.asm")
+        os.remove("output_result")
+        os.remove("output")
+
+        return False
 
 # Availiable modes
 # Mostly for debugging
@@ -24,41 +60,10 @@ def print_tokens(tokens : list[Token]):
     for token in tokens:
         print(f"{token.index} {token.type.name} {token.value}")
 
-def execute_expr(expr : str):
-    try:
-        lexer = Lexer(expr)
-        tokens = lexer.lex()
-        parser = Parser(tokens, lexer.text)
-        expr = parser.parse_expr()
-        if expr is None:
-            expr = Expr(ExprType.INTEGER, value=0)
-        compiler = Compiler(expr)
-    except SystemExit:
-        return
-
-    with open("output.asm", "w") as f:
-        f.write(compiler.compile())
-    run(["fasm", "output.asm"], capture_output=True)
-
-    with open("output_result", "wb") as out:
-        run(["./output"], stdout=out)
-
-    with open("output_result", "rb") as out:
-        result = int.from_bytes(out.read(), "little")
-        print(result if result < NEGATIVE_BOUNDRY else result - (NEGATIVE_BOUNDRY * 2 + 2))
-
-    os.remove("output.asm")
-    os.remove("output_result")
-    os.remove("output")
-
 def main():
     if not OUTPUT_MODE:
-        print("Use \"exit\" to exit")
-        while True:
-            inp = input(" > ")
-            if inp.strip() == "exit":
-                exit(0)
-            execute_expr(inp)
+        REPL().cmdloop()
+        exit(0)
 
     lexer = Lexer(input("Expression: "))
     tokens = lexer.lex()
