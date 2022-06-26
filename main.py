@@ -62,17 +62,19 @@ def main():
 
     lexer = Lexer(input("Expression: "))
     tokens = lexer.lex()
-    parser = Parser(tokens, lexer.text)
-    expr = parser.parse_expr()
-    compiler = Compiler(expr)
     
     if OUTPUT_MODE == "LEXER":
         print_tokens(tokens)
         return
     if OUTPUT_MODE == "PARSER":
+        parser = Parser(tokens, lexer.text)
+        expr = parser.parse_expr()
         print(expr)
         return
     if OUTPUT_MODE == "COMPILER":
+        parser = Parser(tokens, lexer.text)
+        expr = parser.parse_expr()
+        compiler = Compiler(expr)
         print(compiler.compile())
         return
 
