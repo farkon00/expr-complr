@@ -1,7 +1,9 @@
 import cmd
 import os
+import sys
 
 from subprocess import run
+from interpreter.interpreter import Interpreter
 
 from lexer.lexer import Lexer
 from lexer.token import Token
@@ -12,8 +14,39 @@ from parser.parser import Parser
 from compiler.compiler import Compiler
 
 class REPL(cmd.Cmd):
+    mode = "i"
     intro = "Use \"exit\" to exit"
     prompt = " > "
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.mode == "i":
+            self.inter = Interpreter()
+            print("Running in interpreted mode")
+        elif self.mode == "c":
+            print("Running in compiled mode")
+
+    def _execute(self, expr: Expr):
+        if self.mode == "i":
+            print(self.inter.compute(expr))
+        elif self.mode == "c":
+            compiler = Compiler(expr)
+            with open("output.asm", "w") as f:
+                f.write(compiler.compile())
+            run(["fasm", "output.asm"], capture_output=True)
+
+            with open("output_result", "wb") as out:
+                run(["./output"], stdout=out)
+
+            with open("output_result", "rb") as out:
+                result = int.from_bytes(out.read(), "little")
+                print(result if result < NEGATIVE_BOUNDRY else result - (NEGATIVE_BOUNDRY * 2 + 2))
+
+            os.remove("output.asm")
+            os.remove("output_result")
+            os.remove("output")
+        else:
+            assert False, "Unknown mode"
 
     def onecmd(self, expr):
         if expr.strip() == "exit":
@@ -25,24 +58,9 @@ class REPL(cmd.Cmd):
             expr = parser.parse_expr()
             if expr is None:
                 expr = Expr(ExprType.INTEGER, value=0)
-            compiler = Compiler(expr)
+            self._execute(expr)
         except SystemExit:
-            return
-
-        with open("output.asm", "w") as f:
-            f.write(compiler.compile())
-        run(["fasm", "output.asm"], capture_output=True)
-
-        with open("output_result", "wb") as out:
-            run(["./output"], stdout=out)
-
-        with open("output_result", "rb") as out:
-            result = int.from_bytes(out.read(), "little")
-            print(result if result < NEGATIVE_BOUNDRY else result - (NEGATIVE_BOUNDRY * 2 + 2))
-
-        os.remove("output.asm")
-        os.remove("output_result")
-        os.remove("output")
+            pass
 
         return False
 
@@ -62,6 +80,10 @@ def print_tokens(tokens : list[Token]):
 
 def main():
     if not OUTPUT_MODE:
+        if len(sys.argv) < 2:
+            REPL.mode = "i"
+        elif sys.argv[1] == "com" or sys.argv[1] == "c":
+            REPL.mode = "c"
         REPL().cmdloop()
         exit(0)
 
