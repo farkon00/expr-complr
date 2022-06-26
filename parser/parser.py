@@ -24,6 +24,8 @@ class Parser:
 
         final_tokens = []
 
+        self.last_value = None
+
         for token in self.tokens:
             if self.last_value is None:
                 self.last_value = token
@@ -48,6 +50,7 @@ class Parser:
                 self.last_value = token
 
         final_tokens.append(self.last_value)
+        self.last_value = None
         self.tokens = iter(final_tokens)
         final_tokens = []
         for token in self.tokens:
@@ -76,7 +79,11 @@ class Parser:
                 final_tokens.append(self.last_value)
                 self.last_value = token
 
-        final_tokens.append(self.last_value)
+        if self.last_value:
+            final_tokens.append(self.last_value)
+        else:
+            return None
+        self.last_value = None
         self.tokens = iter(final_tokens)
         for token in self.tokens:
             entered = True
@@ -88,7 +95,10 @@ class Parser:
                 right = self.last_value
                 self.last_value = Expr(self.OPER_TO_EXPR[token.value], self.parse_expr(), right)
                 if self.last_value.left is None:
-                    throw_error("Missing left operand", index=token.index, line=self.text)
+                    if token.value != "-":
+                        throw_error("Missing left operand", index=token.index, line=self.text)
+                    else:
+                        self.last_value.left = Expr(ExprType.INTEGER, value=0)
             elif isinstance(token, Expr):
                 self.last_value = token
             else:
