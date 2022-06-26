@@ -24,15 +24,23 @@ class REPL(cmd.Cmd):
             self.inter = Interpreter()
             print("Running in interpreted mode")
         elif self.mode == "c":
+            self.compl = Compiler(None)
             print("Running in compiled mode")
 
-    def _execute(self, expr: Expr):
+    def _execute(self, expr: Expr, line: str):
         if self.mode == "i":
-            print(self.inter.compute(expr))
+            try:
+                res = self.inter.compute(expr, line)
+            except SystemExit:
+                self.inter.reload(None)
+                raise SystemExit
+            print(res)
+            self.inter.reload(res)
+
         elif self.mode == "c":
-            compiler = Compiler(expr)
+            self.compl.reload(expr, line)
             with open("output.asm", "w") as f:
-                f.write(compiler.compile())
+                f.write(self.compl.compile())
             run(["fasm", "output.asm"], capture_output=True)
 
             with open("output_result", "wb") as out:
@@ -41,6 +49,7 @@ class REPL(cmd.Cmd):
             with open("output_result", "rb") as out:
                 result = int.from_bytes(out.read(), "little")
                 print(result if result < NEGATIVE_BOUNDRY else result - (NEGATIVE_BOUNDRY * 2 + 2))
+                self.compl.prev_result = result
 
             os.remove("output.asm")
             os.remove("output_result")
@@ -49,6 +58,7 @@ class REPL(cmd.Cmd):
             assert False, "Unknown mode"
 
     def onecmd(self, expr):
+        line = expr
         if expr.strip() == "exit":
             return True
         try:
@@ -58,7 +68,7 @@ class REPL(cmd.Cmd):
             expr = parser.parse_expr()
             if expr is None:
                 expr = Expr(ExprType.INTEGER, value=0)
-            self._execute(expr)
+            self._execute(expr, line)
         except SystemExit:
             pass
 

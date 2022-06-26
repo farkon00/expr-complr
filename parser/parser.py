@@ -58,7 +58,7 @@ class Parser:
                 try:
                     left = next(self.tokens)
                 except StopIteration:
-                    throw_error("Missing left operand", index=token.index, line=self.text)
+                    left = Expr(ExprType.CHAIN, token=token)
                 if isinstance(left, Token) and left.type != TokenType.INTEGER:
                     throw_error("Missing left operand", index=left.index, line=self.text)
                 if isinstance(left, Token):
@@ -74,13 +74,14 @@ class Parser:
         self.tokens = iter(final_tokens[::-1])
         final_tokens = []
         for token in self.tokens:
-            if self.last_value is None:
+            if self.last_value is None and token.value not in self.HIGHER_OPER_TO_EXPR:
                 self.last_value = token
                 continue
             if token.value in self.HIGHER_OPER_TO_EXPR:
                 if self.last_value is None:
-                    throw_error("Missing left operand", index=token.index, line=self.text)
-                left = self.last_value
+                    left = Expr(ExprType.CHAIN, token=token)
+                else:
+                    left = self.last_value
                 if isinstance(self.last_value, Token):
                     if self.last_value.type != TokenType.INTEGER:
                         throw_error("Missing left operand", index=token.index, line=self.text)
@@ -114,7 +115,7 @@ class Parser:
                 self.last_value = Expr(self.OPER_TO_EXPR[token.value], self.parse_expr(), right)
                 if self.last_value.left is None:
                     if token.value != "-":
-                        throw_error("Missing left operand", index=token.index, line=self.text)
+                        self.last_value.left = Expr(ExprType.CHAIN, token=token)
                     else:
                         self.last_value.left = Expr(ExprType.INTEGER, value=0)
             elif isinstance(token, Expr):

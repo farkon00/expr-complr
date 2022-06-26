@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Optional
 
+from lexer.token import Token
+
 
 class ExprType(Enum):
     INTEGER = auto()
@@ -11,6 +13,7 @@ class ExprType(Enum):
     DIV = auto()
     MOD = auto()
     POW = auto()
+    CHAIN = auto()
 
 @dataclass
 class Expr:
@@ -19,6 +22,7 @@ class Expr:
     left: Optional["Expr"] = None
     right: Optional["Expr"] = None
     value: int | str | None = None
+    token: Token | None = None
 
     def _pad(self, text: str) -> str:
         return "\n".join(['  ' + i for i in text.split('\n')])

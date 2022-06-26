@@ -1,3 +1,4 @@
+from error import throw_error
 from parser.expr import *
 
 class Compiler:
@@ -13,6 +14,14 @@ class Compiler:
     def __init__(self, expr: Expr):
         self.expr = expr
         self.asm = ""
+        self.chained = False
+        self.prev_result = None
+
+    def reload(self, expr: Expr, text: str):
+        self.expr = expr
+        self.asm = ""
+        self.text = text
+        self.chained = False
 
     def generate_fasm_header(self):
         self.asm += \
@@ -64,6 +73,12 @@ class Compiler:
             self.compile(expr.right)
             self.compile(expr.left)
             self.asm += self.OPER_ASM[expr.type]
+        elif expr.type == ExprType.CHAIN:
+            if self.prev_result is None or self.chained:
+                throw_error("Missing left operand", index=expr.token.index, line=self.text)
+            else:
+                self.chained = True
+                self.asm += f"mov rax, {self.prev_result}\npush rax\n"
 
         if main:
             self.generate_fasm_footer()
