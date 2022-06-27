@@ -39,8 +39,9 @@ class REPL(cmd.Cmd):
 
         elif self.mode == "c":
             self.compl.reload(expr, line)
+            res = self.compl.compile()
             with open("output.asm", "w") as f:
-                f.write(self.compl.compile())
+                f.write(res)
             run(["fasm", "output.asm"], capture_output=True)
 
             with open("output_result", "wb") as out:
